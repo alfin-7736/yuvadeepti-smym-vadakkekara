@@ -1,0 +1,505 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yuvadeepti SMYM Vadakkekara - Accounting (UI Demo)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF CDN for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF-AutoTable CDN for table generation in PDF - LOADED AFTER jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.16/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* Custom font import for Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        /* General input styling */
+        input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, select {
+            border: 1px solid #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+            background-color: #ffffff;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        /* General button styling */
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Darker blue */
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Gray */
+            color: white;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* Darker gray */
+            transform: translateY(-1px);
+        }
+        .btn-success {
+            background-color: #10b981; /* Green */
+            color: white;
+            border: none;
+        }
+        .btn-success:hover {
+            background-color: #059669; /* Darker green */
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background-color: #ef4444; /* Red */
+            color: white;
+            border: none;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626; /* Darker red */
+            transform: translateY(-1px);
+        }
+        .btn-warning {
+            background-color: #f59e0b; /* Amber */
+            color: white;
+            border: none;
+        }
+        .btn-warning:hover {
+            background-color: #d97706; /* Darker Amber */
+            transform: translateY(-1px);
+        }
+
+
+
+
+        /* Card-like sections */
+        .card {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+
+        /* Message box styling */
+        #message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #message-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #message-box.success {
+            background-color: #10b981; /* Green */
+        }
+        #message-box.error {
+            background-color: #ef4444; /* Red */
+        }
+        #message-box.info {
+            background-color: #3b82f6; /* Blue */
+        }
+
+
+        /* Data table styling */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px; /* Added rounded corners to table */
+            overflow: hidden; /* Ensures rounded corners apply to content */
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0; /* Lighter border for a cleaner look */
+            padding: 12px 16px; /* More padding */
+            text-align: left;
+        }
+        .data-table thead th {
+            background-color: #edf2f7; /* Light gray header */
+            color: #2d3748; /* Darker text */
+            font-weight: 600; /* Semi-bold */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f7fafc; /* Subtle stripe for readability */
+        }
+        .data-table tfoot td {
+            font-weight: bold;
+            background-color: #e0e0e0;
+            border-top: 2px solid #cbd5e0; /* Stronger separator for total */
+        }
+
+
+        /* Spinner for loading states */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Blue spinner */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block; /* To allow it to sit next to text/buttons */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+        /* Modal styling */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            width: 450px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-backdrop.show .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800">
+
+
+    <!-- Header Section -->
+    <header class="bg-white shadow-md p-4 rounded-b-xl mb-8 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+            <!-- Logo and Site Title -->
+            <div class="flex items-center mb-4 md:mb-0">
+                <!-- Logo will be a static placeholder in this version -->
+                <img id="header-logo"
+                     src="https://placehold.co/100x40/B0B0B0/000000?text=SMYM+Logo"
+                     alt="SMYM Vadakkekara Logo"
+                     class="h-10 w-auto mr-3 rounded-md shadow-sm">
+                <h1 class="text-3xl font-extrabold text-blue-700">Yuvadeepti SMYM Vadakkekara</h1>
+            </div>
+
+
+            <!-- Navigation Menu -->
+            <nav>
+                <ul class="flex flex-wrap justify-center space-x-4 sm:space-x-6">
+                    <li><a href="#home" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Home</a></li>
+                    <li><a href="#about" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">About Us</a></li>
+                    <li id="invoice-nav-item" class="hidden"><a href="#invoice" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Invoice</a></li>
+                    <li id="cash-out-nav-item" class="hidden"><a href="#cash-out" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Cash Out</a></li>
+                    <li id="accounting-nav-item" class="hidden"><a href="#accounting" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Accounting</a></li>
+                    <li id="admin-panel-nav-item" class="hidden"><a href="#admin-panel" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Admin Panel</a></li>
+                    <li id="profile-nav-item" class="hidden"><a href="#profile" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Profile</a></li>
+                    <li id="login-nav-item"><a href="#login" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Login</a></li>
+                    <li id="logout-nav-item" class="hidden"><a href="#logout" class="nav-link text-blue-600 hover:text-blue-800 font-medium py-2 px-3 rounded-md transition-colors">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+
+    <!-- Message Box for user feedback -->
+    <div id="message-box" class="message-box"></div>
+
+
+    <!-- Custom Modal Structure (hidden by default) -->
+    <div id="custom-modal-backdrop" class="modal-backdrop">
+        <div id="custom-modal-content" class="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-gray-800"></h3>
+            <p id="modal-message" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="modal-confirm-btn" class="btn-danger">Confirm</button>
+                <button id="modal-cancel-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Main Content Area - Renders dynamic content -->
+    <main id="app-content" class="flex-grow container mx-auto px-4 py-8">
+        <!-- Content will be loaded here by JavaScript -->
+        <div id="loading-spinner" class="hidden text-center p-8">
+            <div class="spinner mx-auto mb-4"></div>
+            <p>Loading...</p>
+        </div>
+    </main>
+
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white p-6 mt-8 rounded-t-xl">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Yuvadeepti SMYM Vadakkekara. All rights reserved.</p>
+            <p class="text-sm mt-2">This is a UI demonstration. All data is non-persistent.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        // jsPDF library is already loaded via CDN in the head
+        // jsPDF-AutoTable library is already loaded via CDN in the head and extends jsPDF globally
+
+
+        // --- Global State (In-Memory - NOT PERSISTENT) ---
+        let currentAuthUser = null; // Simulates logged-in user
+        let currentUserData = null; // Simulates user profile data
+
+
+        // In-memory data stores (will be empty on every page load)
+        let allUsers = [];
+        let allInvoices = []; // All invoices, for admin/executive view
+        let allCashOutRequests = []; // All cash out requests, for admin/executive view
+        let accountingEntries = []; // All accounting entries
+
+
+        // Add dummy initial data for demonstration purposes
+        // This data will be reset on every page load.
+        // For a real app, this would come from a database.
+        const dummyUsers = [
+            { id: 'admin123', email: 'admin@yuvadeepti.com', displayName: 'Super Admin', role: 'admin', createdAt: new Date() },
+            { id: 'exec456', email: 'executive@yuvadeepti.com', displayName: 'Executive User', role: 'executive', createdAt: new Date() },
+            { id: 'user789', email: 'user@yuvadeepti.com', displayName: 'Local User 1', role: 'user', createdAt: new Date() }
+        ];
+
+
+        // Initialize with dummy users and data on page load
+        // This simulates a fresh start each time.
+        function initializeDummyData() {
+            allUsers = JSON.parse(JSON.stringify(dummyUsers)); // Deep copy to prevent modification of original
+            allInvoices = [];
+            allCashOutRequests = [];
+            accountingEntries = [];
+        }
+
+
+
+
+        // DOM element references
+        const invoiceNavItem = document.getElementById('invoice-nav-item');
+        const cashOutNavItem = document.getElementById('cash-out-nav-item');
+        const accountingNavItem = document.getElementById('accounting-nav-item');
+        const adminPanelNavItem = document.getElementById('admin-panel-nav-item');
+        const profileNavItem = document.getElementById('profile-nav-item');
+        const loginNavItem = document.getElementById('login-nav-item');
+        const logoutNavItem = document.getElementById('logout-nav-item');
+        const appContent = document.getElementById('app-content');
+        const messageBox = document.getElementById('message-box');
+        const customModalBackdrop = document.getElementById('custom-modal-backdrop');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const headerLogo = document.getElementById('header-logo');
+
+
+        // --- Helper Functions ---
+
+
+        /**
+         * Displays a message box.
+         * @param {string} message - The message to display.
+         * @param {'success'|'error'|'info'} type - The type of message (determines color).
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box show ${type}`; // Reset classes and add new ones
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000); // Message disappears after 3 seconds
+        }
+
+
+        /**
+         * Shows a custom confirmation modal.
+         * @param {string} title - The title of the modal.
+         * @param {string} message - The message content.
+         * @returns {Promise<boolean>} Resolves true if confirmed, false if cancelled.
+         */
+        function showConfirm(title, message) {
+            return new Promise((resolve) => {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                customModalBackdrop.classList.add('show');
+
+
+                const handleConfirm = () => {
+                    customModalBackdrop.classList.remove('show');
+                    modalConfirmBtn.removeEventListener('click', handleConfirm);
+                    modalCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(true);
+                };
+
+
+                const handleCancel = () => {
+                    customModalBackdrop.classList.remove('show');
+                    modalConfirmBtn.removeEventListener('click', handleConfirm);
+                    modalCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(false);
+                };
+
+
+                modalConfirmBtn.addEventListener('click', handleConfirm);
+                modalCancelBtn.addEventListener('click', handleCancel);
+            });
+        }
+
+
+        /**
+         * Shows or hides the global loading spinner.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleLoadingSpinner(show) {
+            if (show) {
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+
+        /**
+         * Navigates to a specific section of the application.
+         * @param {string} hash - The hash (e.g., '#login', '#invoice').
+         */
+        function navigate(hash) {
+            console.log(`Navigating to: ${hash}`);
+            window.location.hash = hash;
+            renderContent();
+        }
+
+
+        /**
+         * Updates navigation item visibility based on simulated user authentication status and role.
+         */
+        function updateNavigationVisibility() {
+            const isLoggedIn = currentAuthUser !== null;
+            const isAdmin = currentUserData && currentUserData.role === 'admin';
+            const isExecutive = currentUserData && currentUserData.role === 'executive';
+
+
+            // Hide all by default
+            invoiceNavItem.classList.add('hidden');
+            cashOutNavItem.classList.add('hidden');
+            accountingNavItem.classList.add('hidden');
+            adminPanelNavItem.classList.add('hidden');
+            profileNavItem.classList.add('hidden');
+            loginNavItem.classList.remove('hidden');
+            logoutNavItem.classList.add('hidden');
+
+
+            if (isLoggedIn) {
+                loginNavItem.classList.add('hidden');
+                logoutNavItem.classList.remove('hidden');
+                profileNavItem.classList.remove('hidden');
+
+
+                if (currentUserData) {
+                    // All logged-in users can manage their own invoices and cash-out requests
+                    invoiceNavItem.classList.remove('hidden');
+                    cashOutNavItem.classList.remove('hidden');
+
+
+                    // Executive and Admin can view accounting
+                    if (isExecutive || isAdmin) {
+                        accountingNavItem.classList.remove('hidden');
+                    }
+                    // Only Admin can access admin panel
+                    if (isAdmin) {
+                        adminPanelNavItem.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+
+
+        // --- Simulated Authentication and User Data Management ---
+
+
+        /**
+         * Simulates fetching current user data (from in-memory `allUsers`).
+         * In a real app, this would be a database call.
+         * @param {string} uid - The simulated user ID.
+         */
+        function fetchCurrentUserData(uid) {
+            return new Promise(resolve => {
+                setTimeout(() => { // Simulate async fetch
+                    const user = allUsers.find(u => u.id === uid);
+                    if (user) {
+                        currentUserData = { ...user }; // Copy to avoid direct mutation
+                        console.log("Current user data loaded:", currentUserData);
+                    } else {
+                        currentUserData = null;
+                        console.warn("User data not found for UID:", uid);
+                    }
+                    resolve();
+                }, 50); // Small delay to simulate network
+            });
+        }
+
+
+        /**
+         * Simulates setting a user as logged in.
+         * @param {object} user - The dummy user object.
+         */
+        async function simulateLogin(user) {
+            currentAuthUser = { uid: user.id, email: user.email, displayName: user.displayName };
+            await fetchCurrentUserData(user.id);
+            updateNavigationVisibility();
+            renderContent();
+        }
+
+
+        /**
+         * Simulates logging out a user.
+         */
+        function simulateLogout() {
+            currentAuthUser = null;
+            currentUserData = null;
+            updateNav
